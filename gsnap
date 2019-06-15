@@ -1,0 +1,57 @@
+#!/bin/sh -e
+
+# This file is part of gsnap.
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the  terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see
+#
+#  http://www.gnu.org/licenses/
+#
+#
+# Copyright (C) 2019 mksec <support@mksec.de>
+
+if [ "$#" -ne 3 ]
+then
+    echo "Usage: $0 volname snapname keep" >&2
+    echo "" >&2
+    echo "  volname   name of the volume" >&2
+    echo "  snapname  name of the snapshot (e.g. hourly)" >&2
+    echo "  keep      number of snapshots to keep" >&2
+    echo "" >&2
+
+    exit 1
+fi
+
+VOLUME=$1
+NAME=$2
+KEEP=$3
+
+
+# The actual name of the snapshot will be a concatenation of $VOLUME and $NAME,
+# so each snapshot has a destinguishable name in the snapshot list and can be
+# associated with its volume.
+SNAPNAME=$(printf '%s_%s' $VOLUME $NAME)
+
+
+# Create the new snapshot before deleting the old ones.
+#
+# First, a new snapshot will be created. Then, the list of snapshots with the
+# same $SNAPNAME will be evaluated and all except the last $KEEP ones will be
+# deleted.
+/usr/sbin/gluster snapshot create $SNAPNAME $VOLUME
+
+/usr/sbin/gluster snapshot list $VOLUME \
+    | grep "^$SNAPNAME"                 \
+    | head -n "-$KEEP"                  \
+    | while read SNAP; do
+        /usr/bin/yes | /usr/sbin/gluster snapshot delete $SNAP
+    done
