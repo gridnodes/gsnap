@@ -1,0 +1,13 @@
+Source: mksec-gsnap
+Priority: optional
+Section: admin
+Maintainer: mksec Packaging Team <packages@mksec.de>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.9.3
+
+Package: mksec-gsnap
+Architecture: all
+Multi-Arch: foreign
+Depends: glusterfs-server, ${misc:Depends}
+Recommends: parallel
+Description: GlusterFS snapshot script
